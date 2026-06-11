@@ -1,0 +1,76 @@
+profile: "aiida_profile"
+workchain: "vasp.band.batch"
+report:               
+  output_dir: "./reports"
+  output_name: "REPORT.md"  
+
+inputs:
+  structure_config:
+    protos:
+      - "BCC"
+      - "FCC"
+      - "Alpha-U"
+      - "XO2"
+    element: "U"
+    to_primitive: true
+  pseudos_list:
+    - "PBE"
+    - "LDA"
+  dry_run: false
+  vasp:
+    # VASP 代码 (通过 aiida.orm.load_code 加载)
+    band_settings:
+      band_mode: "seekpath-aiida"
+      band_kpoints_distance: 0.02
+      run_dos: true
+      dos_kpoints_distance: 0.05
+      only_dos: false
+    scf:
+      code: "vaspstd@yeesuan"
+      parameters:
+        incar:
+          encut: 400
+          ismear: 0
+          sigma: 0.01
+          nsw: 0
+          ibrion: -1
+          ispin: 1
+          lreal: "Auto"
+          prec: "Accurate"
+      potential_family: "LDA"           # 势能家族名称
+      potential_mapping:
+        U: "U"                          # 元素到势能的映射
+        O: "O"
+      kpoints_spacing: 0.12
+      # 计算资源设置
+      calc:
+        metadata:
+          options:
+            resources:
+              num_machines: 1
+              num_mpiprocs_per_machine: 56
+              tot_num_mpiprocs: 56
+            max_wallclock_seconds: 3600      # 1 hour
+            queue_name: "q_ysuan"
+            withmpi: true
+    bands:
+      parameters:
+        incar:
+          lorbit: 11
+          nbands: 50
+        charge:
+          constant_charge: true
+      settings:
+        parser_settings:
+          include_node: ["bands"]
+    dos:
+      parameters:
+        incar:
+          emin: -5
+          emax: 25
+          nedos: 3000
+        charge:
+          constant_charge: true
+      settings:
+        parser_settings:
+          include_node: ["dos"]

@@ -37,6 +37,7 @@ inputs:
     potential_family: "LDA"           # 势能家族名称
     potential_mapping:
       U: "U"                          # 元素到势能的映射
+      O: "O"
 
     # k-points 设置 (二选一: kpoints 或 kpoints_spacing)
     kpoints_spacing: 0.06

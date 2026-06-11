@@ -24,6 +24,7 @@ class VaspBandBatchWorkChain(VaspBatchSubmitWorkChain):
             include=[
                 "scf",
                 "bands",
+                "dos",
                 "structure",
                 "band_settings",
             ],
@@ -39,11 +40,10 @@ class VaspBandBatchWorkChain(VaspBatchSubmitWorkChain):
         inputs["structure"] = stru
         label = f"{potential}_{proto}"
 
-        # Set structure and potential in scf namespace
+        # Set structure in scf namespace
         if "scf" not in inputs:
             inputs["scf"] = {}
         inputs["scf"]["structure"] = stru
-        inputs["scf"]["potential_family"] = orm.Str(potential)
 
         # Set label in metadata at workchain level
         inputs.setdefault("metadata", {})
@@ -58,9 +58,12 @@ class VaspBandBatchWorkChain(VaspBatchSubmitWorkChain):
         inputs = super().build_inputs_from_config(cfg)
         inp = cfg.get("inputs", {})
 
+        # ── vasp namespace (contains scf, bands, dos, band_settings) ──
+        vasp_cfg = inp.get("vasp", {})
+
         # ── scf namespace ──
         from aiida.orm import Dict, load_code
-        scf_cfg = inp.get("scf", {})
+        scf_cfg = vasp_cfg.get("scf", {})
         scf_inputs = {}
 
         if "code" in scf_cfg:
@@ -89,7 +92,29 @@ class VaspBandBatchWorkChain(VaspBatchSubmitWorkChain):
             inputs["scf"] = scf_inputs
 
         # ── band_settings ──
-        if "band_settings" in inp:
-            inputs["band_settings"] = orm.Dict(dict=inp["band_settings"])
+        if "band_settings" in vasp_cfg:
+            inputs["band_settings"] = orm.Dict(dict=vasp_cfg["band_settings"])
+
+        # ── bands namespace ──
+        if "bands" in vasp_cfg:
+            bands_cfg = vasp_cfg["bands"]
+            bands_inputs = {}
+            if "parameters" in bands_cfg:
+                bands_inputs["parameters"] = Dict(dict=bands_cfg["parameters"])
+            if "settings" in bands_cfg:
+                bands_inputs["settings"] = Dict(dict=bands_cfg["settings"])
+            if bands_inputs:
+                inputs["bands"] = bands_inputs
+
+        # ── dos namespace ──
+        if "dos" in vasp_cfg:
+            dos_cfg = vasp_cfg["dos"]
+            dos_inputs = {}
+            if "parameters" in dos_cfg:
+                dos_inputs["parameters"] = Dict(dict=dos_cfg["parameters"])
+            if "settings" in dos_cfg:
+                dos_inputs["settings"] = Dict(dict=dos_cfg["settings"])
+            if dos_inputs:
+                inputs["dos"] = dos_inputs
 
         return inputs
