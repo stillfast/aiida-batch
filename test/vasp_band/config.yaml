@@ -29,7 +29,7 @@ inputs:
       additional_band_analysis_parameters:
         with_time_reversal: true
         reference_distance: 0.025
-        recipe: "hse"
+        recipe: "hpkot"
         threshold: 1.0e-6
     scf:
       code: "vaspstd@yeesuan"
