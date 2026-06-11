@@ -49,7 +49,7 @@ inputs:
     # VASP 代码
     code: "vaspstd@yeesuan"
 
-    # INCAR 参数
+    # parameters (Dict) - 包含 incar 等参数
     parameters:
       incar:
         encut: 400
@@ -69,12 +69,14 @@ inputs:
     # k-points 间距
     kpoints_spacing: 0.06
 
-    # 计算资源设置
-    options:
-      resources:
-        num_machines: 1
-        num_mpiprocs_per_machine: 56
-        tot_num_mpiprocs: 56
-      max_wallclock_seconds: 7200      # 2 hours
-      queue_name: "q_ysuan"
-      withmpi: true
+    # 计算资源设置 (在 calc.metadata.options 中)
+    calc:
+      metadata:
+        options:
+          resources:
+            num_machines: 1
+            num_mpiprocs_per_machine: 56
+            tot_num_mpiprocs: 56
+          max_wallclock_seconds: 7200      # 2 hours
+          queue_name: "q_ysuan"
+          withmpi: true

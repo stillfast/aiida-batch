@@ -25,10 +25,11 @@ class VaspBaseBatchWorkChain(VaspBatchSubmitWorkChain):
                 "code",
                 "structure",
                 "kpoints",
+                "kpoints_spacing",
                 "parameters",
                 "potential_family",
                 "potential_mapping",
-                "options",
+                "calc",
             ],
         )
         spec.input("structure", valid_type=orm.StructureData, required=False)
@@ -41,11 +42,15 @@ class VaspBaseBatchWorkChain(VaspBatchSubmitWorkChain):
         inputs["structure"] = StructureData(ase=atoms)
         inputs["potential_family"] = orm.Str(potential)
         label = f"{potential}_{proto}"
-        if "options" not in inputs:
-            inputs["options"] = orm.Dict(dict={})
-        options = inputs["options"].get_dict()
-        options.setdefault("metadata", {})["label"] = label
-        inputs["options"] = orm.Dict(dict=options)
+        
+        # Set label in calc.metadata.options if exists
+        if "calc" in inputs and isinstance(inputs["calc"], dict):
+            inputs["calc"].setdefault("metadata", {}).setdefault("options", {})["label"] = label
+        elif "calc" not in inputs:
+            inputs["calc"] = {
+                "metadata": {"options": {"label": label}}
+            }
+        
         return inputs
 
     # ------------------------------------------------------------------
@@ -58,11 +63,5 @@ class VaspBaseBatchWorkChain(VaspBatchSubmitWorkChain):
         # ── vasp namespace ──
         vasp_cfg = inp.get("vasp", {})
         inputs.update(cls._build_vasp_namespace(vasp_cfg))
-
-        if "kpoints_spacing" in inp:
-            inputs["kpoints_spacing"] = orm.Float(inp["kpoints_spacing"])
-
-        if "options" in inp:
-            inputs["options"] = orm.Dict(dict=inp["options"])
 
         return inputs

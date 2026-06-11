@@ -303,9 +303,10 @@ class VaspBatchSubmitWorkChain(WorkChain):
 
     @staticmethod
     def _build_vasp_namespace(vasp_cfg: dict) -> dict:
-        """Helper: build the ``vasp`` input namespace from a config sub-dict.
+        """Helper: build the VASP input namespace from a config sub-dict.
 
-        Handles *code*, *incar*, *kpoints*, *potcar*, *metadata*.
+        Handles *code*, *parameters* (incar), *kpoints*, *potential_family*, 
+        *potential_mapping*, *kpoints_spacing*, *calc*.
         """
         from aiida.orm import Dict, load_code
 
@@ -319,11 +320,11 @@ class VaspBatchSubmitWorkChain(WorkChain):
             else:
                 result["code"] = code_label
 
-        # incar parameters
-        if "incar" in vasp_cfg:
-            result["incar"] = Dict(dict=vasp_cfg["incar"])
+        # parameters (Dict containing incar)
+        if "parameters" in vasp_cfg:
+            result["parameters"] = Dict(dict=vasp_cfg["parameters"])
 
-        # kpoints
+        # kpoints (KpointsData)
         if "kpoints" in vasp_cfg:
             from aiida.orm import KpointsData
             kp = KpointsData()
@@ -334,15 +335,19 @@ class VaspBatchSubmitWorkChain(WorkChain):
                     kp.set_kpoints_path(**vasp_cfg["kpoints"]["path"])
             result["kpoints"] = kp
 
-        # potcar / potential settings
+        # kpoints_spacing
+        if "kpoints_spacing" in vasp_cfg:
+            result["kpoints_spacing"] = orm.Float(vasp_cfg["kpoints_spacing"])
+
+        # potential settings
         if "potential_family" in vasp_cfg:
             result["potential_family"] = orm.Str(vasp_cfg["potential_family"])
 
         if "potential_mapping" in vasp_cfg:
             result["potential_mapping"] = Dict(dict=vasp_cfg["potential_mapping"])
 
-        # metadata
-        if "metadata" in vasp_cfg:
-            result["metadata"] = vasp_cfg["metadata"]
+        # calc (contains metadata.options)
+        if "calc" in vasp_cfg:
+            result["calc"] = vasp_cfg["calc"]
 
         return result

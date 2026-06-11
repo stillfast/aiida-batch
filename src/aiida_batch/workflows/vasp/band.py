@@ -29,8 +29,6 @@ class VaspBandBatchWorkChain(VaspBatchSubmitWorkChain):
             ],
         )
         spec.input("structure", valid_type=orm.StructureData, required=False)
-        spec.input("scf.code", valid_type=orm.Str, required=False)
-        spec.input("scf.kpoints_spacing", valid_type=orm.Float, required=False)
 
     # ------------------------------------------------------------------
 
@@ -47,11 +45,12 @@ class VaspBandBatchWorkChain(VaspBatchSubmitWorkChain):
         inputs["scf"]["structure"] = stru
         inputs["scf"]["potential_family"] = orm.Str(potential)
 
-        if "options" not in inputs["scf"]:
-            inputs["scf"]["options"] = orm.Dict(dict={})
-        options = inputs["scf"]["options"].get_dict()
-        options.setdefault("metadata", {})["label"] = label
-        inputs["scf"]["options"] = orm.Dict(dict=options)
+        # Set label in scf.calc.metadata.options if exists
+        scf = inputs["scf"]
+        if "calc" in scf and isinstance(scf["calc"], dict):
+            scf["calc"].setdefault("metadata", {}).setdefault("options", {})["label"] = label
+        elif "calc" not in scf:
+            scf["calc"] = {"metadata": {"options": {"label": label}}}
 
         return inputs
 
@@ -63,37 +62,34 @@ class VaspBandBatchWorkChain(VaspBatchSubmitWorkChain):
         inp = cfg.get("inputs", {})
 
         # ── scf namespace ──
-        from aiida.orm import load_code
+        from aiida.orm import Dict, load_code
         scf_cfg = inp.get("scf", {})
+        scf_inputs = {}
+
         if "code" in scf_cfg:
             code_label = scf_cfg["code"]
             if isinstance(code_label, str):
-                inputs.setdefault("scf", {})["code"] = load_code(code_label)
+                scf_inputs["code"] = load_code(code_label)
             else:
-                inputs.setdefault("scf", {})["code"] = code_label
+                scf_inputs["code"] = code_label
 
         if "kpoints_spacing" in scf_cfg:
-            inputs.setdefault("scf", {})["kpoints_spacing"] = orm.Float(
-                scf_cfg["kpoints_spacing"]
-            )
+            scf_inputs["kpoints_spacing"] = orm.Float(scf_cfg["kpoints_spacing"])
 
         if "parameters" in scf_cfg:
-            inputs.setdefault("scf", {})["parameters"] = orm.Dict(
-                dict=scf_cfg["parameters"]
-            )
+            scf_inputs["parameters"] = Dict(dict=scf_cfg["parameters"])
 
         if "potential_family" in scf_cfg:
-            inputs.setdefault("scf", {})["potential_family"] = orm.Str(
-                scf_cfg["potential_family"]
-            )
+            scf_inputs["potential_family"] = orm.Str(scf_cfg["potential_family"])
 
         if "potential_mapping" in scf_cfg:
-            inputs.setdefault("scf", {})["potential_mapping"] = orm.Dict(
-                dict=scf_cfg["potential_mapping"]
-            )
+            scf_inputs["potential_mapping"] = Dict(dict=scf_cfg["potential_mapping"])
 
-        if "options" in scf_cfg:
-            inputs.setdefault("scf", {})["options"] = orm.Dict(dict=scf_cfg["options"])
+        if "calc" in scf_cfg:
+            scf_inputs["calc"] = scf_cfg["calc"]
+
+        if scf_inputs:
+            inputs["scf"] = scf_inputs
 
         # ── band_settings ──
         if "band_settings" in inp:
