@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uranium-potential-test"
+version = "0.1.0"
+description = "Uranium potential testing utilities — structure generation and ABACUS batch workflows"
+requires-python = ">=3.10"
+dependencies = [
+    "ase",
+    "pyxtal",
+    "spglib",
+    "pyyaml",
+]
+
+[project.scripts]
+run-batch = "aiida_batch.cli.run:main"
+run-post = "aiida_batch.cli.run_post:main"
+
+[project.entry-points."aiida.workflows"]
+"abacus.base.batch" = "aiida_batch.workflows.abacus.base:AbacusBaseBatchWorkChain"
+"abacus.band.batch" = "aiida_batch.workflows.abacus.band:AbacusBandBatchWorkChain"
+"vasp.base.batch" = "aiida_batch.workflows.vasp.base:VaspBaseBatchWorkChain"
+"vasp.band.batch" = "aiida_batch.workflows.vasp.band:VaspBandBatchWorkChain"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["aiida_batch", "aiida_batch.*"]
