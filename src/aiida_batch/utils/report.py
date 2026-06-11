@@ -226,12 +226,14 @@ def generate_report(
         raise ValueError(f"no child data found for node {pk_or_uuid}")
 
     # ── build exit-code matrix ──
+    # Support both "pseudo" (Abacus) and "potential" (VASP) keys
     pseudo_order: list[str] = []
     exit_map: dict[tuple[str, str], dict] = {}
     all_pseudos_set: set[str] = set()
 
     for child in children:
-        pseudo = child["pseudo"]
+        # Handle both Abacus (pseudo) and VASP (potential) formats
+        pseudo = child.get("pseudo") or child.get("potential")
         proto = child["proto"]
         all_pseudos_set.add(pseudo)
         exit_map[(pseudo, proto)] = child
@@ -240,7 +242,7 @@ def generate_report(
 
     seen = set()
     for child in children:
-        p = child["pseudo"]
+        p = child.get("pseudo") or child.get("potential")
         if p not in seen:
             pseudo_order.append(p)
             seen.add(p)

@@ -1,0 +1,68 @@
+profile: "aiida_profile"
+workchain: "abacus.band.batch"
+report:
+  output_dir: "./reports"
+  output_name: "REPORT.md"
+  poll_interval: 60       # 后台监控轮询间隔（秒），默认 60
+  max_poll_time: 8400    # 最大监控时长（秒），超时后强制生成报告；不设置则无限等待
+plot:
+  dos_output_dir: "./dos_plots"
+  band_output_dir: "./band_plots"
+  xmin: -5
+  xmax: 7
+  dpi: 150
+  pseudo_labels:
+    "sg15_sz": "U_5spdf"
+inputs:
+  structure_config:
+    protos:
+      - "Alpha-U-test"
+    element: "U"
+    to_primitive: true
+  pseudos_list:
+    - "sg15_sz"
+  dry_run: false
+  pseudos_max: 2
+  structure_max: 2
+  # ── base namespace (passed to AbacusBaseWorkChain inside band) ──
+  base:
+    abacus:
+      code: "abacus_lts@yeesuan"
+      parameters:
+        input:
+          device: "cpu"
+          ecutwfc: 150
+          scf_thr: 1e-9
+          scf_nmax: 100
+          symmetry: 1
+          force_thr: "1e-3"
+          ks_solver: "dav_subspace"
+          precision: "double"
+          basis_type: "pw"
+          calculation: "scf"
+          pw_diag_thr: 1e-7
+      metadata:
+        label: "U-band-batch-alpha"
+        options:
+          resources:
+            num_machines: 1
+            num_mpiprocs_per_machine: 56
+            tot_num_mpiprocs: 56
+          max_wallclock_seconds: 7200
+          queue_name: "q_ysuan"
+          scheduler_stderr: "error.log"
+          scheduler_stdout: "output.log"
+          max_memory_kb: 104857600
+          withmpi: true
+    kpoints_distance: 0.12
+    max_iterations: 3
+
+  # ── band-specific inputs ──
+  band_settings:
+    run_bands: false
+    run_dos: true
+    band_mode: "seekpath-aiida"
+    band_kpoints_distance: 0.02
+    dos_kpoints_distance: 0.1
+    symprec: 1e-5
+    additional_band_analysis_parameters: {}

@@ -46,7 +46,7 @@ class VaspBaseBatchWorkChain(VaspBatchSubmitWorkChain):
         
         # Set label in metadata at workchain level
         inputs.setdefault("metadata", {})
-        inputs["metadata"]["label"] = label
+        inputs['calc']["metadata"]["label"] = label
         
         return inputs
 

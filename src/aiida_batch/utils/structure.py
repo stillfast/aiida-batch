@@ -39,10 +39,11 @@ FIXED_1D_REP: Dict[str, Tuple[int, list[str], list[str], list[float]]] = {
     # Alpha-U: orthorhombic Cmcm, Wyckoff 4c with y=0.10187
     # x = [a, b, c, y]
     "Alpha-U": (63, ["4c"], ["U"], [2.8364, 5.8666, 4.9363, 0.10187]),
+    "Alpha-U-test": (63, ["4c"], ["U"], [2.8420000076, 5.8656997681, 4.9340000153, 0.105]),
 }
 
 # Prototypes that are pure-element (unary); everything else is an oxide.
-_UNARY_PROTOS: set[str] = {"FCC", "BCC", "SC", "Diamond", "Alpha-U"}
+_UNARY_PROTOS: set[str] = {"FCC", "BCC", "SC", "Diamond", "Alpha-U", "Alpha-U-test"}
 
 
 def _build_json_key_to_proto(element: str) -> Dict[str, str]:
