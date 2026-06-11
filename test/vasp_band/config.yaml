@@ -26,6 +26,11 @@ inputs:
       run_dos: true
       dos_kpoints_distance: 0.05
       only_dos: false
+      additional_band_analysis_parameters:
+        with_time_reversal: true
+        reference_distance: 0.025
+        recipe: "hse"
+        threshold: 1.0e-6
     scf:
       code: "vaspstd@yeesuan"
       parameters:
