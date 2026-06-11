@@ -30,6 +30,7 @@ class VaspBaseBatchWorkChain(VaspBatchSubmitWorkChain):
                 "potential_family",
                 "potential_mapping",
                 "calc",
+                "metadata",
             ],
         )
         spec.input("structure", valid_type=orm.StructureData, required=False)
@@ -43,13 +44,9 @@ class VaspBaseBatchWorkChain(VaspBatchSubmitWorkChain):
         inputs["potential_family"] = orm.Str(potential)
         label = f"{potential}_{proto}"
         
-        # Set label in calc.metadata.options if exists
-        if "calc" in inputs and isinstance(inputs["calc"], dict):
-            inputs["calc"].setdefault("metadata", {}).setdefault("options", {})["label"] = label
-        elif "calc" not in inputs:
-            inputs["calc"] = {
-                "metadata": {"options": {"label": label}}
-            }
+        # Set label in metadata at workchain level
+        inputs.setdefault("metadata", {})
+        inputs["metadata"]["label"] = label
         
         return inputs
 

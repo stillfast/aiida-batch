@@ -39,18 +39,15 @@ class VaspBandBatchWorkChain(VaspBatchSubmitWorkChain):
         inputs["structure"] = stru
         label = f"{potential}_{proto}"
 
-        # Set structure in scf namespace
+        # Set structure and potential in scf namespace
         if "scf" not in inputs:
             inputs["scf"] = {}
         inputs["scf"]["structure"] = stru
         inputs["scf"]["potential_family"] = orm.Str(potential)
 
-        # Set label in scf.calc.metadata.options if exists
-        scf = inputs["scf"]
-        if "calc" in scf and isinstance(scf["calc"], dict):
-            scf["calc"].setdefault("metadata", {}).setdefault("options", {})["label"] = label
-        elif "calc" not in scf:
-            scf["calc"] = {"metadata": {"options": {"label": label}}}
+        # Set label in metadata at workchain level
+        inputs.setdefault("metadata", {})
+        inputs["metadata"]["label"] = label
 
         return inputs
 
