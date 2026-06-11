@@ -20,6 +20,7 @@ inputs:
   vasp:
     # VASP 代码 (通过 aiida.orm.load_code 加载)
     band_settings:
+      symprec: 1.0e-5
       band_mode: "seekpath-aiida"
       band_kpoints_distance: 0.02
       run_dos: true
