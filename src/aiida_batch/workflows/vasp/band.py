@@ -63,9 +63,14 @@ class VaspBandBatchWorkChain(VaspBatchSubmitWorkChain):
         inp = cfg.get("inputs", {})
 
         # ── scf namespace ──
+        from aiida.orm import load_code
         scf_cfg = inp.get("scf", {})
         if "code" in scf_cfg:
-            inputs.setdefault("scf", {})["code"] = scf_cfg["code"]
+            code_label = scf_cfg["code"]
+            if isinstance(code_label, str):
+                inputs.setdefault("scf", {})["code"] = load_code(code_label)
+            else:
+                inputs.setdefault("scf", {})["code"] = code_label
 
         if "kpoints_spacing" in scf_cfg:
             inputs.setdefault("scf", {})["kpoints_spacing"] = orm.Float(

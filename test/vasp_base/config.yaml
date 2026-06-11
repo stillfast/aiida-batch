@@ -1,0 +1,54 @@
+profile: "aiida_profile"
+workchain: "vasp.base.batch"
+report:               
+  output_dir: "./reports"
+  output_name: "REPORT.md"  
+
+inputs:
+  structure_config:
+    protos:
+      - "BCC"
+      - "FCC"
+      - "Alpha-U"
+      - "XO2"
+    element: "U"
+    to_primitive: true
+  pseudos_list:
+    - "PBE"
+    - "LDA"
+  dry_run: false
+  vasp:
+    # VASP 代码 (通过 aiida.orm.load_code 加载)
+    code: "vaspstd@yeesuan"
+
+    # INCAR 参数
+    parameters:
+      incar:
+        encut: 400
+        ismear: 0
+        sigma: 0.01
+        nsw: 0
+        ibrion: -1
+        ispin: 1
+        lreal: "Auto"
+        prec: "Accurate"
+
+    # 势能设置
+    potential_family: "LDA"           # 势能家族名称
+    potential_mapping:
+      U: "U"                          # 元素到势能的映射
+
+    # k-points 设置 (二选一: kpoints 或 kpoints_spacing)
+    kpoints_spacing: 0.06
+    # kpoints:
+    #   mesh: [8, 8, 8]
+
+    # 计算资源设置
+    options:
+      resources:
+        num_machines: 1
+        num_mpiprocs_per_machine: 56
+        tot_num_mpiprocs: 56
+      max_wallclock_seconds: 3600      # 1 hour
+      queue_name: "q_ysuan"
+      withmpi: true

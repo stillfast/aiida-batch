@@ -307,13 +307,17 @@ class VaspBatchSubmitWorkChain(WorkChain):
 
         Handles *code*, *incar*, *kpoints*, *potcar*, *metadata*.
         """
-        from aiida.orm import Dict
+        from aiida.orm import Dict, load_code
 
         result = {}
 
         # code
         if "code" in vasp_cfg:
-            result["code"] = vasp_cfg["code"]
+            code_label = vasp_cfg["code"]
+            if isinstance(code_label, str):
+                result["code"] = load_code(code_label)
+            else:
+                result["code"] = code_label
 
         # incar parameters
         if "incar" in vasp_cfg:

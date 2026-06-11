@@ -1,0 +1,52 @@
+profile: "aiida_profile"
+workchain: "abacus.base.batch"
+report:                      # ← run_batch.py 读取（报告输出配置，可选）
+  output_dir: "./reports"
+  output_name: "REPORT.md"  
+
+inputs:
+  structure_config:
+    protos:
+      - "BCC"
+      - "FCC"
+      - "Alpha-U"
+      - "XO2"
+    element: "U"
+    to_primitive: false
+  pseudos_list:
+    - "UO/hl-nr-pbe"
+    - "UO/hl-fr-pz"
+  dry_run: false
+  abacus:
+    code: "abacus_lts@yeesuan"
+    parameters:
+      input:
+        smearing_method: "fd"
+        smearing_sigma: 0.0045
+        device: "cpu"
+        ecutwfc: 150
+        scf_thr: 3e-10
+        scf_nmax: 100
+        symmetry: 1
+        cal_force: true
+        force_thr: "1e-3"
+        ks_solver: "dav_subspace"
+        precision: "double"
+        basis_type: "pw"
+        cal_stress: true
+        stress_thr: 0.5
+        calculation: "scf"
+    metadata:
+      label: "U-batch-test"
+      options:
+        resources:
+          num_machines: 1
+          num_mpiprocs_per_machine: 56
+          tot_num_mpiprocs: 56
+        max_wallclock_seconds: 7200
+        queue_name: "q_ysuan"
+        scheduler_stderr: "error.log"
+        scheduler_stdout: "output.log"
+        max_memory_kb: 104857600
+        withmpi: true
+  kpoints_distance: 0.04
