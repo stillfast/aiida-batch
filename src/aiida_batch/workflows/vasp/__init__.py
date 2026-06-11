@@ -293,9 +293,11 @@ class VaspBatchSubmitWorkChain(WorkChain):
         This base implementation handles the common batch inputs.
         """
         inp = cfg.get("inputs", {})
+        # Accept both potentials_list and pseudos_list (for compatibility)
+        potentials = inp.get("potentials_list") or inp.get("pseudos_list") or []
         return {
             "structure_config": orm.Dict(dict=inp.get("structure_config", {})),
-            "potentials_list": orm.List(list=inp.get("potentials_list", [])),
+            "potentials_list": orm.List(list=potentials),
             "potentials_max": orm.Int(inp.get("potentials_max", 99999)),
             "structure_max": orm.Int(inp.get("structure_max", 99999)),
             "dry_run": orm.Bool(inp.get("dry_run", False)),

@@ -44,12 +44,13 @@ inputs:
     #   mesh: [8, 8, 8]
 
     # 计算资源设置
-    clac:
+    calc:
+      metadata:
         options:
-        resources:
-          num_machines: 1
-          num_mpiprocs_per_machine: 56
-          tot_num_mpiprocs: 56
-        max_wallclock_seconds: 3600      # 1 hour
-        queue_name: "q_ysuan"
-        withmpi: true
+          resources:
+            num_machines: 1
+            num_mpiprocs_per_machine: 56
+            tot_num_mpiprocs: 56
+          max_wallclock_seconds: 3600      # 1 hour
+          queue_name: "q_ysuan"
+          withmpi: true
