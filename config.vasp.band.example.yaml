@@ -1,0 +1,80 @@
+# =============================================================================
+# VASP Band (能带 + DOS) Batch Config Example
+# =============================================================================
+# 使用方法: run-batch config.vasp.band.example.yaml
+#
+# 对应 workchain: vasp.band.batch → vasp.v2.bands
+# =============================================================================
+
+# AiiDA profile
+profile: "yeesuan"
+
+# Workchain 入口点
+workchain: "vasp.band.batch"
+
+# 报告设置 (可选)
+report:
+  output_dir: "./reports"
+  output_name: "vasp-band-batch"
+  poll_interval: 60
+
+# 批量计算输入
+inputs:
+  # 结构配置 (与 abacus 相同)
+  structure_config:
+    protos: ["bcc", "fcc"]           # 可用: bcc, fcc, sc, diamond, alpha, alpha-primitive, bcc-primitive, fcc-primitive
+    element: "U"                      # 元素符号
+    to_primitive: false
+    symprec: 1.0e-5
+
+  # 势能列表
+  potentials_list:
+    - "PBE"
+    - "LDA"
+
+  # 最大数量限制 (可选)
+  potentials_max: 99999
+  structure_max: 99999
+
+  # Band 设置
+  band_settings:
+    band_mode: "seekpath-aiida"
+    band_kpoints_distance: 0.02
+    run_dos: true
+    dos_kpoints_distance: 0.05
+    only_dos: false
+
+  # SCF (自洽计算) 设置
+  scf:
+    # VASP 代码
+    code: "vaspstd@yeesuan"
+
+    # INCAR 参数
+    parameters:
+      incar:
+        encut: 400
+        ismear: 0
+        sigma: 0.01
+        ispin: 1
+        lreal: "Auto"
+        prec: "Accurate"
+        # nbands: 自动根据原子数计算
+
+    # 势能设置
+    potential_family: "PBE"
+    potential_mapping:
+      U: "U"
+      O: "O"
+
+    # k-points 间距
+    kpoints_spacing: 0.06
+
+    # 计算资源设置
+    options:
+      resources:
+        num_machines: 1
+        num_mpiprocs_per_machine: 56
+        tot_num_mpiprocs: 56
+      max_wallclock_seconds: 7200      # 2 hours
+      queue_name: "q_ysuan"
+      withmpi: true

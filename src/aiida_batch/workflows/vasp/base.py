@@ -1,8 +1,8 @@
-"""Batch-submit ``vasp.base`` for multiple potentials and structures.
+"""Batch-submit ``vasp.v2.vasp`` for multiple potentials and structures.
 
 Entry point
 -----------
-* ``vasp.base.batch``
+* ``vasp.base.batch`` → ``vasp.v2.vasp``
 """
 
 from aiida import orm
@@ -11,31 +11,41 @@ from . import VaspBatchSubmitWorkChain
 
 
 class VaspBaseBatchWorkChain(VaspBatchSubmitWorkChain):
-    """Batch-submit ``vasp.base`` for multiple potentials and structures."""
+    """Batch-submit ``vasp.v2.vasp`` for multiple potentials and structures."""
 
-    _child_workchain_entry_point = "vasp.base"
+    _child_workchain_entry_point = "vasp.v2.vasp"
 
     @classmethod
     def define(cls, spec):
         super().define(spec)
         child = cls._get_child_workchain_class()
         spec.expose_inputs(
-            child, include=["vasp_structure", "vasp_code", "vasp incar",
-                           "vasp_kpoints", "potential_family", "potential_mapping"]
+            child,
+            include=[
+                "code",
+                "structure",
+                "kpoints",
+                "parameters",
+                "potential_family",
+                "potential_mapping",
+                "options",
+            ],
         )
-        # structure is generated internally per child
-        spec.input("vasp.vasp_structure", valid_type=orm.StructureData, required=False)
+        spec.input("structure", valid_type=orm.StructureData, required=False)
 
     # ------------------------------------------------------------------
 
     def _build_child_inputs(self, potential: str, proto: str, atoms) -> dict:
         child = self._get_child_workchain_class()
         inputs = self.exposed_inputs(child, agglomerate=True)
-        inputs["vasp_structure"] = StructureData(ase=atoms)
+        inputs["structure"] = StructureData(ase=atoms)
         inputs["potential_family"] = orm.Str(potential)
         label = f"{potential}_{proto}"
-        inputs.setdefault("metadata", {})
-        inputs["metadata"]["label"] = label
+        if "options" not in inputs:
+            inputs["options"] = orm.Dict(dict={})
+        options = inputs["options"].get_dict()
+        options.setdefault("metadata", {})["label"] = label
+        inputs["options"] = orm.Dict(dict=options)
         return inputs
 
     # ------------------------------------------------------------------
@@ -49,7 +59,10 @@ class VaspBaseBatchWorkChain(VaspBatchSubmitWorkChain):
         vasp_cfg = inp.get("vasp", {})
         inputs.update(cls._build_vasp_namespace(vasp_cfg))
 
-        if "kpoints_distance" in inp:
-            inputs["kpoints_distance"] = orm.Float(inp["kpoints_distance"])
+        if "kpoints_spacing" in inp:
+            inputs["kpoints_spacing"] = orm.Float(inp["kpoints_spacing"])
+
+        if "options" in inp:
+            inputs["options"] = orm.Dict(dict=inp["options"])
 
         return inputs

@@ -1,8 +1,8 @@
-"""Batch-submit ``vasp.band`` for multiple potentials and structures.
+"""Batch-submit ``vasp.v2.bands`` for multiple potentials and structures.
 
 Entry point
 -----------
-* ``vasp.band.batch``
+* ``vasp.band.batch`` → ``vasp.v2.bands``
 """
 
 from aiida import orm
@@ -11,19 +11,26 @@ from . import VaspBatchSubmitWorkChain
 
 
 class VaspBandBatchWorkChain(VaspBatchSubmitWorkChain):
-    """Batch-submit ``vasp.band`` for multiple potentials and structures."""
+    """Batch-submit ``vasp.v2.bands`` for multiple potentials and structures."""
 
-    _child_workchain_entry_point = "vasp.band"
+    _child_workchain_entry_point = "vasp.v2.bands"
 
     @classmethod
     def define(cls, spec):
         super().define(spec)
         child = cls._get_child_workchain_class()
         spec.expose_inputs(
-            child, include=["base", "kpoints_band", "band_settings"]
+            child,
+            include=[
+                "scf",
+                "bands",
+                "structure",
+                "band_settings",
+            ],
         )
-        # structure is generated internally per child
-        spec.input("base.vasp_structure", valid_type=orm.StructureData, required=False)
+        spec.input("structure", valid_type=orm.StructureData, required=False)
+        spec.input("scf.code", valid_type=orm.Str, required=False)
+        spec.input("scf.kpoints_spacing", valid_type=orm.Float, required=False)
 
     # ------------------------------------------------------------------
 
@@ -31,15 +38,21 @@ class VaspBandBatchWorkChain(VaspBatchSubmitWorkChain):
         child = self._get_child_workchain_class()
         inputs = self.exposed_inputs(child, agglomerate=True)
         stru = StructureData(ase=atoms)
-        # VaspBandWorkChain needs the structure in two places:
-        #   - top-level (directly required by band)
-        #   - base (for the underlying base workchain)
         inputs["structure"] = stru
-        inputs["base"]["vasp_structure"] = stru
-        inputs["base"]["potential_family"] = orm.Str(potential)
         label = f"{potential}_{proto}"
-        inputs["base"].setdefault("metadata", {})
-        inputs["base"]["metadata"]["label"] = label
+
+        # Set structure in scf namespace
+        if "scf" not in inputs:
+            inputs["scf"] = {}
+        inputs["scf"]["structure"] = stru
+        inputs["scf"]["potential_family"] = orm.Str(potential)
+
+        if "options" not in inputs["scf"]:
+            inputs["scf"]["options"] = orm.Dict(dict={})
+        options = inputs["scf"]["options"].get_dict()
+        options.setdefault("metadata", {})["label"] = label
+        inputs["scf"]["options"] = orm.Dict(dict=options)
+
         return inputs
 
     # ------------------------------------------------------------------
@@ -49,30 +62,36 @@ class VaspBandBatchWorkChain(VaspBatchSubmitWorkChain):
         inputs = super().build_inputs_from_config(cfg)
         inp = cfg.get("inputs", {})
 
-        # ── base namespace ──
-        base_cfg = inp.get("base", {})
-        vasp_cfg = base_cfg.get("vasp", {})
-        inputs["base"] = {
-            **cls._build_vasp_namespace(vasp_cfg),
-        }
+        # ── scf namespace ──
+        scf_cfg = inp.get("scf", {})
+        if "code" in scf_cfg:
+            inputs.setdefault("scf", {})["code"] = scf_cfg["code"]
 
-        if "kpoints_distance" in base_cfg:
-            inputs["base"]["kpoints_distance"] = orm.Float(base_cfg["kpoints_distance"])
+        if "kpoints_spacing" in scf_cfg:
+            inputs.setdefault("scf", {})["kpoints_spacing"] = orm.Float(
+                scf_cfg["kpoints_spacing"]
+            )
 
-        if "potential_family" in base_cfg:
-            inputs["base"]["potential_family"] = orm.Str(base_cfg["potential_family"])
+        if "parameters" in scf_cfg:
+            inputs.setdefault("scf", {})["parameters"] = orm.Dict(
+                dict=scf_cfg["parameters"]
+            )
 
-        if "max_iterations" in base_cfg:
-            inputs["base"]["max_iterations"] = orm.Int(base_cfg["max_iterations"])
+        if "potential_family" in scf_cfg:
+            inputs.setdefault("scf", {})["potential_family"] = orm.Str(
+                scf_cfg["potential_family"]
+            )
 
-        # ── band-specific ──
+        if "potential_mapping" in scf_cfg:
+            inputs.setdefault("scf", {})["potential_mapping"] = orm.Dict(
+                dict=scf_cfg["potential_mapping"]
+            )
+
+        if "options" in scf_cfg:
+            inputs.setdefault("scf", {})["options"] = orm.Dict(dict=scf_cfg["options"])
+
+        # ── band_settings ──
         if "band_settings" in inp:
             inputs["band_settings"] = orm.Dict(dict=inp["band_settings"])
-
-        if "kpoints_band" in inp:
-            from aiida.orm import KpointsData
-            kp = KpointsData()
-            kp.set_kpoints_mesh(inp["kpoints_band"])
-            inputs["kpoints_band"] = kp
 
         return inputs

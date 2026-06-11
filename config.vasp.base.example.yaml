@@ -1,0 +1,74 @@
+# =============================================================================
+# VASP Base (SCF) Batch Config Example
+# =============================================================================
+# 使用方法: run-batch config.vasp.base.example.yaml
+#
+# 对应 workchain: vasp.base.batch → vasp.v2.vasp
+# =============================================================================
+
+# AiiDA profile
+profile: "yeesuan"
+
+# Workchain 入口点
+workchain: "vasp.base.batch"
+
+# 报告设置 (可选)
+report:
+  output_dir: "./reports"
+  output_name: "vasp-base-batch"
+  poll_interval: 60
+
+# 批量计算输入
+inputs:
+  # 结构配置 (与 abacus 相同)
+  structure_config:
+    protos: ["bcc", "fcc"]           # 可用: bcc, fcc, sc, diamond, alpha, alpha-primitive, bcc-primitive, fcc-primitive
+    element: "U"                      # 元素符号
+    to_primitive: false
+    symprec: 1.0e-5
+
+  # 势能列表 (与 pseudos_list 类似，但对应 VASP potential)
+  potentials_list:
+    - "PBE"
+    - "LDA"
+
+  # 最大数量限制 (可选)
+  potentials_max: 99999
+  structure_max: 99999
+
+  # VASP 计算参数
+  vasp:
+    # VASP 代码 (通过 aiida.orm.load_code 加载)
+    code: "vaspstd@yeesuan"
+
+    # INCAR 参数
+    parameters:
+      incar:
+        encut: 400
+        ismear: 0
+        sigma: 0.01
+        nsw: 0
+        ibrion: -1
+        ispin: 1
+        lreal: "Auto"
+        prec: "Accurate"
+
+    # 势能设置
+    potential_family: "LDA"           # 势能家族名称
+    potential_mapping:
+      U: "U"                          # 元素到势能的映射
+
+    # k-points 设置 (二选一: kpoints 或 kpoints_spacing)
+    kpoints_spacing: 0.06
+    # kpoints:
+    #   mesh: [8, 8, 8]
+
+    # 计算资源设置
+    options:
+      resources:
+        num_machines: 1
+        num_mpiprocs_per_machine: 56
+        tot_num_mpiprocs: 56
+      max_wallclock_seconds: 3600      # 1 hour
+      queue_name: "q_ysuan"
+      withmpi: true
